@@ -31,6 +31,8 @@ def main():
                 page.goto(f"http://127.0.0.1:{server.server_port}/example-tool/")
                 page.wait_for_selector("#recordlist button")
                 assert page.locator(".leaflet-container").count() == 1
+                page.locator("#order").select_option(index=1)
+                assert page.locator("#recordlist button").count()>0
                 page.locator("#query").fill("zzzz-no-such-match")
                 page.wait_for_function("document.querySelector('#count').textContent.startsWith('0 matching')")
                 page.locator("#clear").click()

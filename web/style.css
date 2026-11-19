@@ -3,3 +3,5 @@
 :root{--tint:#e0e8e0;--brand:#26594c;--ground:#f0f2eb}
 
 .workspace>*,.panel,.scroller{min-width:0}.panel{overflow-wrap:anywhere}
+
+.sortlabel{display:flex;align-items:center;gap:.4rem}.sortlabel select{max-width:14rem}

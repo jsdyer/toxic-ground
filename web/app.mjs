@@ -1,5 +1,5 @@
 import {folded,selectRows,quote} from './model.mjs';
-import {config, details, columns, qualifies, extraTerms} from './project.mjs';
+import {config, details, columns, qualifies, extraTerms, sorts} from './project.mjs';
 const $=id=>document.getElementById(id);
 const el=(tag,text,cls)=>{const v=document.createElement(tag);if(text!==undefined)v.textContent=text;if(cls)v.className=cls;return v};
 export {el};
@@ -15,6 +15,7 @@ fetch('./basemap.json').then(r=>r.json()).then(data=>{
 tiles.on('tileerror',()=>{$('mapnote').textContent='Some street tiles are unavailable. The regional outlines and record points remain available.'});
 $('streets').onchange=()=>{if($('streets').checked){tiles.addTo(map);map.removeLayer(areas)}else{map.removeLayer(tiles);areas.addTo(map);areas.eachLayer(s=>s.bringToBack())}};
 let records=[], filtered=[],selected=null,start=0,manifest, generation=0;
+const defaultOrder=(a,b)=>a.title.localeCompare(b.title)||a.id.localeCompare(b.id);
 const perPage=24;
 function options(id,list,first){
  const input=$(id);const current=input.value;
@@ -52,7 +53,7 @@ function pick(row,move=true){
  if(row){const d=$('detail');const h=el('h2',row.title);d.append(el('p',row.kind+' · '+row.status,'eyebrow'),h,el('p',[row.place,row.province].filter(Boolean).join(', '),'subtitle'));details(row,d);
   if(move&&row.geo){map.setView(row.geo,Math.max(12,map.getZoom()));gridMarkers()}
  }else $('detail').append(el('p','No matching record.'));
- drawList();const u=new URL(location.href);if(row)u.searchParams.set('id',row.id);else u.searchParams.delete('id');for(const id of ['query','kind','status','owner','extra']){const key=id==='query'?'q':id,val=$(id).value;if(val)u.searchParams.set(key,val);else u.searchParams.delete(key)}history.replaceState(null,'',u);
+ drawList();const u=new URL(location.href);if(row)u.searchParams.set('id',row.id);else u.searchParams.delete('id');for(const id of ['query','kind','status','owner','extra','order']){const key=id==='query'?'q':id,val=$(id).value;if(val)u.searchParams.set(key,val);else u.searchParams.delete(key)}history.replaceState(null,'',u);
 }
 function drawList(){
  const wrap=$('recordlist');wrap.replaceChildren();
@@ -66,6 +67,8 @@ function drawList(){
 function render(fit=true,preferred){
  const old=selected?.id;
  filtered=selectRows(records,$('query').value,$('kind').value,$('status').value,$('owner').value,r=>qualifies(r,$('extra').value));
+ const order=sorts.find(x=>x[0]===$('order').value);
+ if(order?.[2])filtered.sort((a,b)=>order[2](a,b)||defaultOrder(a,b));
  start=0;
  const choice=preferred?filtered.find(r=>r.id===preferred):filtered.find(r=>r.id===old)||filtered[0];
  if(choice&&preferred){start=Math.floor(filtered.indexOf(choice)/perPage)*perPage;}
@@ -78,14 +81,14 @@ async function region(preferred, initial){
  const data=await read('./data/'+g+'.json');if(version!==generation)return;
  records=data.map(r=>({...r,search:folded([r.title,r.province,r.place,r.address,r.id,r.property,r.kind,r.status,r.owner,...extraTerms(r)].join(' '))})).sort((a,b)=>a.title.localeCompare(b.title)||a.id.localeCompare(b.id));
  options('kind',records.map(r=>r.kind),config.allKind);options('owner',records.map(r=>r.owner),config.allOwner);options('status',records.map(r=>r.status),config.allStatus);
- if(initial)for(const k of ['kind','status','owner','extra']){const val=initial.get(k);if([...$(k).options].some(o=>o.value===val))$(k).value=val}
+ if(initial)for(const k of ['kind','status','owner','extra','order']){const val=initial.get(k);if([...$(k).options].some(o=>o.value===val))$(k).value=val}
  const u=new URL(location.href);u.searchParams.set('region',g);history.replaceState(null,'',u);render(true,preferred);
 }
 function fail(){ $('count').textContent='The record file could not load. Reload this page to try again.'; }
 $('region').onchange=()=>{for(const id of ['query','kind','owner','status','extra'])$(id).value='';region().catch(fail)};
 $('query').oninput=()=>render();
-for(const id of ['kind','status','owner','extra'])$(id).onchange=()=>render();
-$('clear').onclick=()=>{for(const id of ['query','kind','status','owner','extra'])$(id).value='';render()};
+for(const id of ['kind','status','owner','extra','order'])$(id).onchange=()=>render();
+$('clear').onclick=()=>{for(const id of ['query','kind','status','owner','extra','order'])$(id).value='';render()};
 $('prev').onclick=()=>{start=Math.max(0,start-perPage);drawList()};$('next').onclick=()=>{start+=perPage;drawList()};
 $('frame').onclick=frame;
 $('export').onclick=()=>{
@@ -97,6 +100,7 @@ async function startApp(){
  const qs=new URLSearchParams(location.search);
  for(const g of manifest.groups)$('region').add(new Option(config.groups[g]||g,g));
  $('region').value=manifest.groups.includes(qs.get('region'))?qs.get('region'):config.defaultGroup;
+ $('order').replaceChildren(...sorts.map(([v,l])=>new Option(l,v)));
  $('extra').replaceChildren(...config.extras.map(([v,l])=>new Option(l,v)));
  $('retrieved').textContent='Retrieved '+manifest.retrieved+' · '+manifest.count.toLocaleString('en-CA')+' records in this edition';
  for(const s of manifest.sources)$('sources').append(link(s.name,s.url));

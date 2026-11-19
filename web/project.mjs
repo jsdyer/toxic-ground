@@ -1,13 +1,13 @@
 import {facts,tabular,href,node,primaryColumns} from './view.mjs';
-import {knownSum,currency} from './model.mjs';
-export const config={slug:'toxic-ground',groups:{BC:'British Columbia',NS:'Nova Scotia'},defaultGroup:'NS',defaultQuery:'Halifax',center:[47,-82],zoom:4,allKind:'Every classification',allStatus:'Every site status',allOwner:'All custodians',extras:[['','Every site'],['trend','At least ten fiscal years'],['spending','Recorded spending above zero'],['unknown','Without a map position']]};
+import {knownSum,currency,stepStreak} from './model.mjs';
+export const config={slug:'toxic-ground',groups:{BC:'British Columbia',NS:'Nova Scotia'},defaultGroup:'NS',defaultQuery:'Halifax',center:[47,-82],zoom:4,allKind:'Every classification',allStatus:'Every site status',allOwner:'All custodians',extras:[['','Every site'],['trend','At least ten fiscal years'],['same','Same step in 5+ consecutive fiscal years'],['spending','Recorded spending above zero'],['unknown','Without a map position']]};
 const stepLabels=['','Identify suspected site','Review site history','Initial testing','Classify site','Detailed testing','Reclassify site','Develop strategy','Implement strategy','Confirmatory sampling and reporting','Long-term monitoring'];
 const amount=v=>v==null?'—':currency(v/100);
 function total(r){return knownSum(r.years.flatMap(y=>y.slice(2,6)))}
-export function qualifies(r,k){return !k||({trend:r.years.length>=10,spending:total(r)>0,unknown:!r.geo})[k]}
+export function qualifies(r,k){return !k||({trend:new Set(r.years.map(y=>y[0])).size>=10,same:stepStreak(r.years)>=5,spending:total(r)>0,unknown:!r.geo})[k]}
 export const extraTerms=r=>[...r.media.flat(),...r.strategy];
 export function details(r,d){
- facts(d,[['Federal site ID',r.id],['Custodian',r.owner],['Record modified',r.updated],['Reported expenditures across fiscal records',amount(total(r))],['Management strategies',r.strategy.join(' · ')]]);
+ facts(d,[['Federal site ID',r.id],['Custodian',r.owner],['Record modified',r.updated],['Reported expenditures across fiscal records',amount(total(r))],['Consecutive fiscal years reporting the latest step',stepStreak(r.years)||'Unavailable'],['Management strategies',r.strategy.join(' · ')]]);
  if(r.description)d.append(node('p',r.description));
  tabular(d,'Recorded contaminants and media',['Contaminant','Medium'],r.media);
  tabular(d,'Fiscal history',['Fiscal year','Highest completed step','Assessment','Remediation','Care & maintenance','Monitoring','Reporting org.'],r.years.map(y=>[y[0],y[1]?(y[1]+' '+(stepLabels[Number(y[1])]||'')):'—',...y.slice(2,6).map(amount),y[6]]));
@@ -15,3 +15,5 @@ export function details(r,d){
  href(d,'Read the federal ten-step framework','https://www.canada.ca/en/environment-climate-change/services/federal-contaminated-sites/publications/decision-making-framework-version-4-1.html');
 }
 export const columns=()=>[...primaryColumns,['Property number',r=>r.property],['Fiscal rows',r=>r.years.length],['Reported expenditures CAD',r=>{const v=total(r);return v===null?'':(v/100).toFixed(2)}],['Source record modified',r=>r.updated]];
+
+export const sorts=[['','Site name'],['spending','Highest reported spending',(a,b)=>(total(b)??-1)-(total(a)??-1)],['streak','Longest repeated latest step',(a,b)=>stepStreak(b.years)-stepStreak(a.years)]];

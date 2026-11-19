@@ -65,13 +65,13 @@ jobs:
           fi
       - name: Save browser screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: browser-checks
           path: browser-checks/
           retention-days: 7
       - name: Save reviewable site
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: browser-tool-preview
           path: dist/

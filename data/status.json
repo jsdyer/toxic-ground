@@ -1,0 +1,18 @@
+{
+  "retrieved": "2026-11-19",
+  "count": 6670,
+  "mapped": 6520,
+  "sources": [
+    {
+      "name": "Federal Contaminated Sites Inventory",
+      "url": "https://open.canada.ca/data/en/dataset/1d42f7b9-1549-40aa-8ac6-0e0302ff2902",
+      "download": "https://map-carte.tbs-sct.gc.ca/fcsi-rscf/oddo/fcsi-rscf.zip"
+    }
+  ],
+  "firstFiscal": "1995-1996",
+  "lastFiscal": "2025-2026",
+  "groups": [
+    "BC",
+    "NS"
+  ]
+}

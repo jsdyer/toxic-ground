@@ -1,16 +1,38 @@
 {
-  "id": "coolcode-tool-template",
-  "title": "CoolCode Tool Starter",
-  "description": "A browser-only example that trims lines and removes exact duplicates.",
-  "category": "security",
-  "tags": ["text", "lines", "duplicates"],
-  "icon": "scan-search",
-  "url": "/coolcode-tool-template/",
-  "source": "https://github.com/jsdyer/coolcode-tool-template",
+  "id": "toxic-ground",
+  "title": "Toxic Ground",
+  "description": "Trace the investigation of a recorded site. Compare its contaminants, annual expenditures and highest completed management step across fiscal years.",
+  "category": "places",
+  "tags": [
+    "environment",
+    "contaminated sites",
+    "expenditures",
+    "BC",
+    "Nova Scotia"
+  ],
+  "icon": "layers",
+  "url": "/toxic-ground/",
+  "source": "https://github.com/jsdyer/toxic-ground",
   "hosting": "project",
   "access": "browser",
   "data_info": {
-    "mode": "local",
-    "detail": "The browser reads the text you paste and compares its lines."
+    "mode": "snapshot",
+    "detail": "The Federal Contaminated Sites Inventory reports site status, contaminants, fiscal expenditures and management steps in BC and Nova Scotia.",
+    "cadence": "Weekly",
+    "probes": [
+      {
+        "url": "https://coolcode.ca/toxic-ground/data/status.json",
+        "path": [
+          "retrieved"
+        ],
+        "label": "Source retrieved",
+        "count_at": {
+          "path": [
+            "count"
+          ],
+          "unit": "sites"
+        }
+      }
+    ]
   }
 }

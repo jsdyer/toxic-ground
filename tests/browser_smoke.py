@@ -29,22 +29,31 @@ def main():
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(f"http://127.0.0.1:{server.server_port}/example-tool/")
-                page.locator("#sample").click()
-                assert page.locator("#output").input_value() == "Halifax\nLangley\nVancouver"
-                assert "1 duplicate removed" in page.locator("#status").inner_text()
-                page.locator("#input").fill('<img src=x onerror="alert(1)">\n<img src=x onerror="alert(1)">')
-                assert page.locator("#output").input_value() == '<img src=x onerror="alert(1)">'
-                assert page.locator("img").count() == 0
+                page.wait_for_selector("#recordlist button")
+                assert page.locator(".leaflet-container").count() == 1
+                page.locator("#query").fill("zzzz-no-such-match")
+                page.wait_for_function("document.querySelector('#count').textContent.startsWith('0 matching')")
                 page.locator("#clear").click()
-                assert page.locator("#output").input_value() == ""
-                page.locator("#sample").click()
-                page.screenshot(path=str(screenshots / "desktop.png"), full_page=True)
-                page.set_viewport_size({"width": 390, "height": 844})
+                page.locator("#recordlist button").first.wait_for()
+                page.locator("#recordlist button").nth(1).click()
+                assert "?region=" in page.url and "id=" in page.url
+                assert page.locator("#detail h2").inner_text().strip()
+                with page.expect_download() as result:
+                    page.click("#export")
+                assert result.value.suggested_filename.endswith(".csv")
+                page.select_option("#region","NS")
+                page.locator("#query").fill("00008521")
+                page.wait_for_function("document.querySelector('#detail h2')?.textContent.toLowerCase().includes('willow park')")
+                assert "Fiscal history" in page.locator("#detail").inner_text()
+                page.reload()
+                page.wait_for_function("document.querySelector('#detail h2')?.textContent.toLowerCase().includes('willow park')")
+                page.screenshot(path=str(screenshots / "desktop.png"))
+                page.set_viewport_size({"width":390,"height":844})
                 assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-                page.screenshot(path=str(screenshots / "mobile.png"), full_page=True)
+                page.screenshot(path=str(screenshots / "mobile.png"))
                 assert not errors, errors
                 browser.close()
-            print("Browser checks passed: project subpath, sample, clear, safe text and mobile layout")
+            print("Browser checks passed: map, filters, record links, CSV and mobile layout")
         finally:
             server.shutdown()
 

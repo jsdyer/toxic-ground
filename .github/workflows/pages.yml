@@ -50,7 +50,8 @@ jobs:
       - name: Install browser test dependencies
         run: |
           python3 -m pip install -r tests/browser-requirements.txt
-          python3 -m playwright install --with-deps chromium
+          echo "CHROMIUM_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          google-chrome --version
       - name: Check application in a browser
         run: python3 tests/browser_smoke.py
       - name: Save validated edition
